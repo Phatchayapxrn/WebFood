@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Ordering</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    {% if is_lunch_time %}
+    <section>
+        <header>
+            <h1>สั่งอาหาร</h1>
+        </header>
+        
+        <img src="static/S__59170838.jpg" alt="Food Image" width="150">
+        
+        <form id="orderForm">
+            
+            <div id="Food">
+                <select id="restaurantSelect" name="restaurant">
+                    <option value="">เลือกร้านอาหาร</option>
+                    {% for restaurant in restaurants %}
+                    <option value="{{ restaurant.name }}">{{ restaurant.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div id="Menu">
+                <select id="menuSelect" name="menu_item">
+                    <option value="">เลือกเมนู</option>
+                </select>
+            </div>
+                      
+            <div>
+
+            <button type="submit">สั่งอาหาร</button>
+            </div>
+        </form>
+        
+        <p id="orderResult"></p>
+    </section>
+
+    <script>
+        document.getElementById('restaurantSelect').addEventListener('change', function() {
+            const restaurantName = this.value;
+            
+            const menuSelect = document.getElementById('menuSelect');
+            menuSelect.innerHTML = '<option value="">เลือก เมนู</option>';
+
+            if (restaurantName) {
+                fetch(`/menu/${restaurantName}`)
+                    .then(response => response.json())
+                    .then(menu => {
+                        menu.forEach(item => {
+                            const option = document.createElement('option');
+                            option.value = item;
+                            option.textContent = item;
+                            menuSelect.appendChild(option);
+                        });
+                    })
+                    .catch(error => console.error('Error fetching menu:', error));
+            }
+        });
+
+        document.getElementById('orderForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const restaurantName = document.getElementById('restaurantSelect').value;
+            const menuItem = document.getElementById('menuSelect').value;
+
+            if (restaurantName && menuItem) {
+                fetch('/order', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ restaurant: restaurantName, menu_item: menuItem })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('orderResult').textContent = data.message || data.error;
+                })
+                .catch(error => console.error('Error placing order:', error));
+            } else {
+                document.getElementById('orderResult').textContent = 'กรุณาเลือกเมนูและร้านอาหารก่อน';
+            }
+        });
+    </script>
+
+    {% else %}
+    <section>
+        <h2>การสั่งอาหารสามารถทำได้เฉพาะระหว่าง 11:00 ถึง 13:00 เท่านั้น</h2>
+    </section>
+    {% endif %}
+
+    
+</body>
+</html>
